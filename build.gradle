@@ -42,3 +42,57 @@ dependencies {
 task wrapper(type: Wrapper) {
     gradleVersion = '2.3'
 }
+
+/*
+ *
+ * I am trying to find a way to rewrite the batch script made by gradle when compiling the code with "installApp"
+ * Does not work yet!
+ *
+ * For now, put this code at the start of the program.bat file in the build/install/bin:
+
+    if not "%minimized%"=="" goto :minimized
+    set minimized=true
+    start /min cmd /C "%~dpnx0"
+    goto :EOF
+    :minimized
+
+ */
+
+
+
+
+
+apply from: "IO.gradle"
+
+// Modify the Windows start script so that no console is shown when the user starts the app.
+// This also creates a copy of the original start script in case we want to use the console for debugging
+startScripts << {
+
+    def startScriptDir = outputDir.getAbsolutePath()
+    def winStartScript = startScriptDir + "/" + applicationName + ".bat"
+    def winStartScriptCopy = startScriptDir + "/" + applicationName + "WithConsole.bat"
+    def overwriteExistingFile = true
+    copyFile(winStartScript, winStartScriptCopy, overwriteExistingFile)
+
+    modifyFile(winStartScript) {
+        // javaw.exe doesn't have a console
+        if (it.contains("java.exe")) {
+            return it.replace("java.exe", "javaw.exe")
+        }
+        // Command that launches the app
+        else if (it.startsWith("\"%JAVA_EXE%\" %DEFAULT_JVM_OPTS%")) {
+            return "start \"\" /b " + it
+        }
+        // Leave the line unchanged
+        else {
+            return it
+        }
+    }
+}
+
+installApp {
+    // Include the additional start script
+    into("bin/"){
+        from(startScripts.outputDir)
+    }
+}
