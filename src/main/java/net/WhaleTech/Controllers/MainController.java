@@ -85,13 +85,19 @@ public class MainController implements Initializable
     public void initialize(URL location, ResourceBundle resources)
     {
         System.out.println("Localizing...");
+        // Localize the GUI
         LocalizeGUI(Main.bundle);
 
         System.out.println("Creating Root!");
 
+        // Cretes a new root from the JsonSource.
+        // I use the JsonSource, as that is the fresh source which is loaded from the file.
         root = getTreeModel(JsonSource);
+
+        // Set CellFactory class for treeview to be the FoodFormatCell() class.
         treeView.setCellFactory(param -> new FoodFormatCell());
 
+        // Sets the cellfactory for the tableview columns
         colSym.setCellValueFactory(new PropertyValueFactory<>("name"));
         colCom.setCellValueFactory(new PropertyValueFactory<>("comment"));
 
@@ -104,14 +110,15 @@ public class MainController implements Initializable
         treeView.getSelectionModel().selectedItemProperty().addListener ((c, oldValue, newValue) -> {
             if(newValue != null && !newValue.isLeaf())
             {
-                //Platform.runLater(() -> treeView.getSelectionModel().clearSelection());
                 selectedFood = null;
             }  // When branch is selected
 
+            // When leaf is selected
             if(newValue != null)
             {
                 selectedFood = newValue.getValue();
 
+                // If leaf is food
                 if(!selectedFood.isCategory())
                 {
                     food.setFont(new Font(20D));
@@ -123,20 +130,22 @@ public class MainController implements Initializable
                         statIcon.setImage(new Image(ClassLoader.getSystemClassLoader().getResource("assets/status/no_icon.png").toString()));
 
                     table.setItems(getSymptoms(selectedFood));
-                }   // If leaf is food
+                }
                 else
+                // If leaf is category
                 {
                     food.setFont(new Font(14D));
                     food.setText("Kategori kan ikke vises!");
                     comField.setText(null);
                     statIcon.setImage(null);
                     table.setItems(null);
-                }   // If leaf is category
+                }
 
-            } // When leaf is selected
+            }
 
         }); // TreeView Action Listener
 
+        // Table View Action Listener
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
                 symText.setText(newSelection.getName());
@@ -151,7 +160,12 @@ public class MainController implements Initializable
                 symChange.setDisable(true);
                 symDel.setDisable(true);
             }
-        }); // Table View Action Listener
+        });
+
+
+        /*
+            Some simple action listeners for the different controllers in the GUI
+         */
 
         btnAdd.setOnAction(e -> {searchText = searchField.getText(); staticTreeView = treeView; FoodController.display("food");});
 
@@ -186,6 +200,12 @@ public class MainController implements Initializable
      *
      */
 
+    /**
+     * Gets all the text from the loaded property file and sets the text and prompt text
+     * for all the objects in the main GUI
+     * @param bundle
+     *          the {@link ResourceBundle} which contains all the localizations
+     */
     public void LocalizeGUI(ResourceBundle bundle)
     {
         searchField.setPromptText(bundle.getString("gui.Main.searchField.prompt"));
@@ -210,6 +230,13 @@ public class MainController implements Initializable
             Tree Methods
       */
 
+    /**
+     *  Creates the basic tree model
+     * @param jSource
+     *          the {@link org.json.JSONObject} which we build the tree upon.
+     * @return
+     *          the {@link TreeItem} root which contains all the sub categories and foods
+     */
     private FilterableTreeItem<Food> getTreeModel(String jSource) {
         root = new FilterableTreeItem<>(new Food("",true, new Tag("root")));
 
@@ -219,6 +246,13 @@ public class MainController implements Initializable
         return root;
     }
 
+    /**
+     * Creates a food category.
+     * @param parent
+     *          which {@link FilterableTreeItem} is the parent
+     * @param title
+     *          the name of the category
+     */
     public static void makeCategory(FilterableTreeItem<Food> parent, String title)
     {
         tagRegistry.add(new Tag(title));
@@ -230,6 +264,15 @@ public class MainController implements Initializable
         parent.getInternalChildren().add(category);
     }
 
+
+
+    /**
+     * Populates a {@link FilterableTreeItem} category.
+     * @param catIndex
+     *          the index of the category to populate
+     * @param food
+     *          the {@link Food} which is to be created in the corresponding slot
+     */
     public static void makeLeaf(int catIndex, Food food)
     {
         FilterableTreeItem<Food> leaf = new FilterableTreeItem<>(food);
@@ -240,6 +283,13 @@ public class MainController implements Initializable
         UnsavedJsonSource = JsonHandler.appendFood(UnsavedJsonSource, catIndex, food);
     }
 
+    /**
+     * Populates the root with categories, sub-categories and foods.
+     * @param jSource
+     *      the {@link org.json.JSONObject} source to extract the tree from.
+     * @param root
+     *      the {@link FilterableTreeItem} root to put the hole tree inside.
+     */
     private void makeTree(String jSource, FilterableTreeItem<Food> root)
     {
         System.out.println("Category Iterations: " + JsonHandler.getCategoryAmount(jSource));
@@ -270,6 +320,13 @@ public class MainController implements Initializable
             Table Methods
       */
 
+    /**
+     * Creates an {@link ObservableList} of symptoms from each {@link Food}
+     * @param food
+     *          the food to get the symptoms from
+     * @return
+     *          an {@link ObservableList} of all the symptoms in the {@link Food} object
+     */
     private ObservableList<Symptoms> getSymptoms(Food food)
     {
         ObservableList<Symptoms> symptoms = FXCollections.observableArrayList();
@@ -283,21 +340,36 @@ public class MainController implements Initializable
         return symptoms;
     }
 
-
+    /**
+     * Class which renders each cell.
+     */
     private class FoodFormatCell extends TreeCell<Food>
     {
+        // Empty constructor.
         public FoodFormatCell() {    }
 
+        /**
+         * Called each time a {@link TreeCell} needs to be updated.
+         * @param item
+         *          the value of the {@link TreeCell}
+         * @param empty
+         *          is the {@link TreeCell} empty or not
+         */
         @Override protected void updateItem(Food item, boolean empty)
         {
             super.updateItem(item, empty);
+            // Sets item of TreeCell
             setItem(item);
+
             if (empty && isSelected()) {
                 setText(null);
                 updateSelected(false);
             }
+
             if(empty)
                 setText(null);
+
+            // If cell is not empty and is not null, then render it with the title of the item.
             if(!empty && item != null)
             {
                 setText(item.getTitle());
