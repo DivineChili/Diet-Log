@@ -47,8 +47,8 @@ public class Confirmation
 
         // Create 2 buttons
 
-        Button btnYes = new Button("Ja!");
-        Button btnNo = new Button("Nei!");
+        Button btnYes = new Button(Main.bundle.getString("gui.Dia.confirm.control.btn1"));
+        Button btnNo = new Button(Main.bundle.getString("gui.Dia.confirm.control.btn2"));
 
         btnYes.setOnAction(e -> {   // "Yes"-button event
             answer = true;
