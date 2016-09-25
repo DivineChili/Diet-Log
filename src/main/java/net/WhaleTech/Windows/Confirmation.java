@@ -17,12 +17,22 @@ public class Confirmation
 {
     static boolean answer;
 
+    // Declare some common Confirmation text properties.
     public static final String[] ConfirmExitProperty = new String[]{
             Main.bundle.getString("gui.Dia.confirm.func.exit.title"),
             Main.bundle.getString("gui.Dia.confirm.func.exit.text1"),
             Main.bundle.getString("gui.Dia.confirm.func.exit.text2")
     };
 
+    /**
+     * Used to get a confirmation from the user. Displays a message on the screen
+     * @param title
+     *              the title of the confirmation box
+     * @param msg
+     *              the message of the confirmation box
+     * @return
+     *              the boolean value of the confirmation
+     */
     public static boolean confirm(String title, String msg)
     {
         Stage window = new Stage();
@@ -37,8 +47,8 @@ public class Confirmation
 
         // Create 2 buttons
 
-        Button btnYes = new Button("Ja!");
-        Button btnNo = new Button("Nei!");
+        Button btnYes = new Button(Main.bundle.getString("gui.Dia.confirm.control.btn1"));
+        Button btnNo = new Button(Main.bundle.getString("gui.Dia.confirm.control.btn2"));
 
         btnYes.setOnAction(e -> {   // "Yes"-button event
             answer = true;

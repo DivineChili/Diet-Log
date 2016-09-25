@@ -60,6 +60,7 @@ public class FilterableTreeItem<T> extends
         this.filteredList = new FilteredList<>(this.sourceList);
         this.filteredList.predicateProperty().bind(Bindings.createObjectBinding(() -> {
             Predicate<TreeItem<T>> p =  child -> {
+
                 // Set the predicate of child items to force filtering
                 if (child instanceof FilterableTreeItem) {
                     FilterableTreeItem<T> filterableChild = (FilterableTreeItem<T>) child;

@@ -12,11 +12,18 @@ import net.WhaleTech.Main;
 
 public class Alert
 {
-
+    // Declare some default text properties
     public static final String[] CommingSoonResourceProperty = new String[]{Main.bundle.getString("gui.Dia.alert.func.CommingSoon.title"),Main.bundle.getString("gui.Dia.alert.func.CommingSoon.text")};
     public static final String[] SaveResourceProperty = new String[]{Main.bundle.getString("gui.Dia.alert.func.Saved.title"),Main.bundle.getString("gui.Dia.alert.func.Saved.text")};
 
 
+    /**
+     * Displays the alert box
+     * @param title
+     *              the title of the alert
+     * @param msg
+     *              the alert message
+     */
     public static void display(String title, String msg)
     {
         Stage window = new Stage();
