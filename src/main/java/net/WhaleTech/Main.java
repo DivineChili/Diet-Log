@@ -73,7 +73,7 @@ public class Main extends Application {
         // Loads the data file and puts it in JsonSource. It then takes a copy of JsonSource to UnsavedJsonSource
         // I do this to compare for changes later on.
         JsonSource = JsonHandler.getJSON(userDataFile);
-        UnsavedJsonSource = JsonSource;
+        UnsavedJsonSource = FileHandler.readFile("assets/baseJson.json");
 
         // Loads up the Localization file from the resources.
         bundle = ResourceBundle.getBundle("assets/lang/GUI",JsonHandler.getLocale(JsonSource));
@@ -151,6 +151,8 @@ public class Main extends Application {
     public static void save(String unsaved)
     {
         System.out.println("Saving UnsavedJsonSource!");
+        System.out.println(JsonSource);
+        System.out.println(UnsavedJsonSource);
         try {
             // Deletes old datafile and creates a fresh, empty file
             new File(userDataFile.getPath()).delete();
