@@ -109,4 +109,15 @@
          </items>
       </SplitPane>
    </center>
+   <top>
+      <MenuBar BorderPane.alignment="CENTER">
+         <menus>
+            <Menu fx:id="OptionMenu" mnemonicParsing="false" text="Options">
+              <items>
+                  <Menu fx:id="localeSelector" mnemonicParsing="false" text="Locale" />
+              </items>
+            </Menu>
+         </menus>
+      </MenuBar>
+   </top>
 </BorderPane>
