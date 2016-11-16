@@ -67,6 +67,9 @@ public class MainController implements Initializable
     @FXML
     private Button symDel;
 
+    @FXML
+    private Menu OptionMenu;
+
 
     private static ArrayList<FilterableTreeItem<Food>> categories = new ArrayList<>();
     public static ArrayList<String> categoryTitles = new ArrayList<>();
@@ -223,6 +226,8 @@ public class MainController implements Initializable
 
         comField.setPromptText(bundle.getString("gui.Main.foodComment.prompt"));
 
+        OptionMenu.setText(bundle.getString("gui.Main.menu"));
+
     }
 
 
@@ -376,7 +381,6 @@ public class MainController implements Initializable
             }
         }
     }
-
 }
 
 
