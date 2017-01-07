@@ -16,10 +16,13 @@ import net.WhaleTech.Windows.Alert;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.ResourceBundle;
+import java.util.concurrent.ExecutionException;
 
 import static net.WhaleTech.Main.JsonSource;
-import static net.WhaleTech.Main.UnsavedJsonSource;
+import static net.WhaleTech.Main.db_controller;
 
 public class MainController implements Initializable
 {
@@ -38,8 +41,7 @@ public class MainController implements Initializable
 
     @FXML
     private SplitMenuButton modify;
-    @FXML
-    private MenuItem modSave;
+
     @FXML
     private MenuItem modDelete;
 
@@ -93,9 +95,12 @@ public class MainController implements Initializable
 
         System.out.println("Creating Root!");
 
-        // Cretes a new root from the JsonSource.
-        // I use the JsonSource, as that is the fresh source which is loaded from the file.
-        root = getTreeModel(JsonSource);
+        // Cretes a new root from the DB.
+        try{
+            root = getTreeModel();
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
 
         // Set CellFactory class for treeview to be the FoodFormatCell() class.
         treeView.setCellFactory(param -> new FoodFormatCell());
@@ -176,7 +181,6 @@ public class MainController implements Initializable
         symDel.setOnAction(e -> Alert.display(Alert.CommingSoonResourceProperty[0],Alert.CommingSoonResourceProperty[1]));
 
         modify.setOnAction(e-> Alert.display(Alert.CommingSoonResourceProperty[0],Alert.CommingSoonResourceProperty[1]));
-        modSave.setOnAction(e-> {Main.save(UnsavedJsonSource); Alert.display(Alert.SaveResourceProperty[0],Alert.SaveResourceProperty[1]);});
         modDelete.setOnAction(e-> { /*
             TreeItem<Food> child = treeView.getSelectionModel().getSelectedItem();
             if(!child.getValue().isCategory())
@@ -214,7 +218,6 @@ public class MainController implements Initializable
         searchField.setPromptText(bundle.getString("gui.Main.searchField.prompt"));
         btnAdd.setText(bundle.getString("gui.Main.btnAdd"));
         modify.setText(bundle.getString("gui.Main.modifyMenu"));
-        modSave.setText(bundle.getString("gui.Main.modSave"));
         modDelete.setText(bundle.getString("gui.Main.modDelete"));
 
         colSym.setText(bundle.getString("gui.Main.table.columnSymptoms"));
@@ -237,17 +240,16 @@ public class MainController implements Initializable
 
     /**
      *  Creates the basic tree model
-     * @param jSource
-     *          the {@link org.json.JSONObject} which we build the tree upon.
+     *
      * @return
      *          the {@link TreeItem} root which contains all the sub categories and foods
      */
-    private FilterableTreeItem<Food> getTreeModel(String jSource) {
+    private FilterableTreeItem<Food> getTreeModel() throws Exception {
         root = new FilterableTreeItem<>(new Food("",true, new Tag("root")));
 
         // Create tree here
 
-        makeTree(jSource, root);
+        makeTree(root);
         return root;
     }
 
@@ -258,11 +260,10 @@ public class MainController implements Initializable
      * @param title
      *          the name of the category
      */
-    public static void makeCategory(FilterableTreeItem<Food> parent, String title)
+    public static void makeCategory(FilterableTreeItem<Food> parent, String title) throws Exception
     {
         tagRegistry.add(new Tag(title));
         FilterableTreeItem<Food> category = new FilterableTreeItem<>(new Food(title,true,tagRegistry.get(tagRegistry.size()-1)));
-        UnsavedJsonSource = JsonHandler.createCategory(UnsavedJsonSource, title);
         category.setExpanded(true);
         categories.add(category);
         categoryTitles.add(title);
@@ -278,47 +279,44 @@ public class MainController implements Initializable
      * @param food
      *          the {@link Food} which is to be created in the corresponding slot
      */
-    public static void makeLeaf(int catIndex, Food food)
+    public static void makeLeaf(int catIndex, Food food) throws Exception
     {
         FilterableTreeItem<Food> leaf = new FilterableTreeItem<>(food);
         categories.get(catIndex).getInternalChildren().add(leaf);
         foodIndex.add(food.getTitle());
-
-        System.out.println("New Food: " + food.toJSON());
-        UnsavedJsonSource = JsonHandler.appendFood(UnsavedJsonSource, catIndex, food);
     }
 
     /**
      * Populates the root with categories, sub-categories and foods.
-     * @param jSource
-     *      the {@link org.json.JSONObject} source to extract the tree from.
+     *
      * @param root
      *      the {@link FilterableTreeItem} root to put the hole tree inside.
      */
-    private void makeTree(String jSource, FilterableTreeItem<Food> root)
+    private void makeTree(FilterableTreeItem<Food> root) throws Exception
     {
-        System.out.println("Category Iterations: " + JsonHandler.getCategoryAmount(jSource));
-        for(int i = 0; i< JsonHandler.getCategoryAmount(jSource); i++)
+
+        System.out.println("Category Iterations: " + db_controller.getCategoryAmount());
+        int[] IDlist = db_controller.getCategoryIDList();
+        for(int i : IDlist)
         {
             System.out.println("MakeTree@i: " + i);
 
             // Loop through all categories
-            System.out.println("MakeTree@i#category: " + JsonHandler.getCategoryTitle(jSource,i));
-            makeCategory(root,JsonHandler.getCategoryTitle(jSource,i));
+            System.out.println("MakeTree@i#category: " + db_controller.getCategoryTitle(i));
+            makeCategory(root,db_controller.getCategoryTitle(i));
             // Make a category each iteration
 
-            for(int j = 1; j < JsonHandler.getCategory(jSource,i).length(); j++)
+            for(Food food : db_controller.getAllFoodsFromCategory(i)) // Loops through all the food in a category with index i
             {
-                System.out.println("MakeTree@j: " + j);
-                /*
-                    Every time a category is created,
-                    make all of it's children
-                 */
+                System.out.println("MakeTree@j: " + food);
 
-                makeLeaf(i, JsonHandler.getFood(jSource,i,j));
-                System.out.println("MakeTree@j#" + JsonHandler.getFood(jSource,i,j) + ": " + JsonHandler.getFood(jSource,i,j).toString());
+                //    Every time a category is created,
+                //    make all of it's children
+
+                makeLeaf(i, food);
             }
         }
+
     }
 
     /*
@@ -341,7 +339,7 @@ public class MainController implements Initializable
                 symptoms.add(sym);
             }
         }catch (NullPointerException e)
-        {e.printStackTrace();}
+        {}
         return symptoms;
     }
 

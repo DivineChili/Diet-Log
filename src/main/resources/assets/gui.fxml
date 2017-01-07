@@ -53,7 +53,6 @@
                         <Region HBox.hgrow="ALWAYS" />
                         <SplitMenuButton fx:id="modify" mnemonicParsing="false" text="Endre">
                            <items>
-                              <MenuItem fx:id="modSave" mnemonicParsing="false" text="Lagre" />
                               <MenuItem fx:id="modDelete" mnemonicParsing="false" text="Slett" />
                            </items>
                            <HBox.margin>

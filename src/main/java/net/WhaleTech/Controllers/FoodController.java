@@ -13,6 +13,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import net.WhaleTech.Food;
 import net.WhaleTech.Handlers.JsonHandler;
+import net.WhaleTech.Main;
 import net.WhaleTech.Symptoms;
 import net.WhaleTech.Tag;
 
@@ -22,16 +23,16 @@ import java.util.ArrayList;
 import java.util.ResourceBundle;
 
 import static java.lang.ClassLoader.getSystemClassLoader;
-import static net.WhaleTech.Main.UnsavedJsonSource;
+import static net.WhaleTech.Controllers.MainController.searchText;
+import static net.WhaleTech.Controllers.MainController.tagRegistry;
+import static net.WhaleTech.Main.db_controller;
 
 /**
  * The food controller which controlls the addFood GUI
  */
-
-/*
- * TODO: 25.09.2016 Internationalize the food gui!
- */
-
+ /*
+    TODO [IMPORTANCE 2]; Internationalize Add-Food GUI
+  */
 public class FoodController implements Initializable
 {
     @FXML
@@ -59,19 +60,21 @@ public class FoodController implements Initializable
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Get all symptoms from the Unsaved json-source
-        String[] globalSymptoms = JsonHandler.getGlobalSymptoms(UnsavedJsonSource);
+        String[] globalSymptoms = {"1","2","3"};
 
         // Add the search content to the name bar if the search field in the main controller is not empty
         if(!MainController.searchText.isEmpty())
             nameField.setText(MainController.searchText);
+
+        // Auto select the last element of the states. (Untested!)
+        stateChoice.getSelectionModel().selectLast();
 
         try {
             // Auto select the category which is selected in the main controller
             categories.getSelectionModel().select(MainController.staticTreeView.getSelectionModel().getSelectedItem().getValue().getTitle());
 
         }catch (NullPointerException e)
-                // If no categories is selected:
-        {System.out.println("No categories selected!");}
+        {} // No categories selected
 
         // If there dosn't exist any categories
         if(MainController.categoryTitles.isEmpty()) {
@@ -99,7 +102,7 @@ public class FoodController implements Initializable
             selectedSymptoms.getItems().add(cmi);
 
         }
-        // Add the last item for the selection box. This is a non custom item.
+        // Add the last item for the selection box. This is a non-custom item.
         MenuItem addSymptom = new MenuItem("Legg Til Symptom");
         addSymptom.setDisable(true); // Disable this item, as it is not yet implemented!
         selectedSymptoms.getItems().add(addSymptom);
@@ -110,7 +113,8 @@ public class FoodController implements Initializable
         }
 
         // Add the state options to the state choicebox
-        stateChoice.getItems().addAll("Bra", "Ok", "Ikke Spis!", "Utestet"); // Add States
+        stateChoice.getItems().addAll("Bra", "Ok", "Ikke Spis!", "Utestet"); // Add States'
+        stateChoice.getSelectionModel().selectLast();
 
         // Add a special listener on the nameField's property so that we can get manipulate the user input.
         nameField.textProperty().addListener((e, oldValue, newValue) ->
@@ -119,11 +123,21 @@ public class FoodController implements Initializable
             if(oldValue.isEmpty() && !CharBlacklist.contains(newValue))
                 nameField.setText(newValue.toUpperCase());
 
-            if(!oldValue.isEmpty())
+            if(!oldValue.isEmpty()) {
 
                 // All letters after space to uppercase
-                if(oldValue.charAt(oldValue.length()-1) == ' ' && newValue.charAt(newValue.length()-1) != ' ')
-                    nameField.setText(newValue.substring(0,newValue.length()-1) + newValue.substring(newValue.length()-1).toUpperCase());
+                if (oldValue.charAt(oldValue.length() - 1) == ' ' && newValue.charAt(newValue.length() - 1) != ' ' && newValue.length() > oldValue.length())
+                    nameField.setText(newValue.substring(0, newValue.length() - 1) + newValue.substring(newValue.length() - 1).toUpperCase());
+
+                if (newValue.contains("$") ||
+                        newValue.contains("&") ||
+                        newValue.contains(":")){
+                    if(!oldValue.isEmpty())
+                        nameField.setText(oldValue);
+                    else
+                        nameField.setText("");
+                }
+            }
         });
 
         // Change the gui controllers if the isCategory checkbox is changed.
@@ -182,25 +196,33 @@ public class FoodController implements Initializable
                 allSyms[j] = selSyms.get(j);
             }
 
-            if(        // Basic Form Validation
-                    !nameField.getText().isEmpty()) {
+            if(selSyms.size() == 0) {allSyms = null;}
+
+            if(     // Basic form Validation
+                    !nameField.getText().isEmpty() &&
+                            !categories.getSelectionModel().isSelected(-1)
+                    ){
 
                 // If food is not a food category
                 if (!isCategory.isSelected())
-                    MainController.makeLeaf(
-                            MainController.categoryTitles.indexOf(categories.getValue()),
-                            new Food(
-                                    nameField.getText(),
-                                    stateChoice.getSelectionModel().getSelectedIndex(),
-                                    allSyms,
-                                    "",
-                                    false,
-                                    new Tag(categories.getValue(),nameField.getText())
-                                    )
-                    );
+                    try {
+                        Food made_food = new Food(
+                                nameField.getText(),
+                                stateChoice.getSelectionModel().getSelectedIndex(),
+                                allSyms,
+                                "",
+                                false,
+                                new Tag(categories.getValue(), nameField.getText())
+                        );
+                        MainController.makeLeaf(MainController.categoryTitles.indexOf(categories.getValue()), made_food);
+                        db_controller.appendFood(MainController.categoryTitles.indexOf(categories.getValue()), made_food);
+                    }catch  (Exception e1) {e1.printStackTrace();}
                 else
                     // If food is a category
+                    try{
                     MainController.makeCategory(MainController.root, nameField.getText());
+                    db_controller.createCategory(nameField.getText(), MainController.categoryTitles.size()-1, tagRegistry.get(tagRegistry.size()-1).toString());
+                } catch (Exception e1) {e1.printStackTrace();}
 
                 // Close the stage
                 Node source = (Node) e.getSource();
@@ -208,6 +230,7 @@ public class FoodController implements Initializable
                 stage.close();
             }
             // Form not accepted handlers. Achieved by elseif statements
+            // TODO Internationalize
             else if (nameField.getText().isEmpty()) {nameField.setText("Dette feltet mangler tekst!");}
         });
     }
@@ -220,14 +243,14 @@ public class FoodController implements Initializable
     {
         Stage window = new Stage();
 
-        // Set modality so that only this window can be accessed while this window is open.
+        // Set modality so that only this window can be accessed while this window is open. Not any other windows opened by the app.
         window.initModality(Modality.APPLICATION_MODAL);
         window.setResizable(false);
 
         Parent root = null;
         try
         {
-            if(FXMLtoLoad == "food")
+            if(FXMLtoLoad.equals("food"))
                 root = FXMLLoader.load(getSystemClassLoader().getResource("assets/foodEdit.fxml"));
         }catch (IOException e)
         {
@@ -237,8 +260,10 @@ public class FoodController implements Initializable
         // Set title of the stage.
         if(MainController.categoryTitles.isEmpty())
             window.setTitle("Legg til kategori!");
+            // TODO Internationalize
         else
             window.setTitle("Legg til mat!");
+            // TODO Internationalize
 
         window.setScene(new Scene(root));
         window.showAndWait();

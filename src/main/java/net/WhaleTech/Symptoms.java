@@ -3,7 +3,7 @@ package net.WhaleTech;
 /**
  * Symptom class used in the {@link Food} objects
  */
-public class Symptoms
+public class  Symptoms
 {
     // The local name and comment of the symptom
     private String name;
@@ -22,18 +22,45 @@ public class Symptoms
     }
 
     /**
+     * Overload constructor to create a symptom from a serialized string.
+     *
+     * @param serializedString
+     *          the serialized string
+     *
+     * @apiNote Syntax: name:some_name,comment:some_comment
+     */
+    public Symptoms(String serializedString) {
+
+        System.out.println("Full string: " +serializedString);
+        String[] segments = serializedString.split("\\$");
+
+        String[] name_segment = segments[0].split(":");
+        System.out.println(name_segment[0]);
+
+        String[] comment_segment = segments[1].split(":");
+        this.name = name_segment[1];
+        this.comment = comment_segment[1];
+    }
+
+    /**
      * toString() override.
      * @return The Name of the symptom, followd by the comment.
      * @apiNote This string is not recommended to use in code, as it is meant to be used for debug purposes.
      */
     @Override
-    public String toString()
-    {
+    public String toString() {
         String finalString = "";
 
-        finalString += "Navn: " + name + ", Kommentar: " + comment + '\n';
+        if(!comment.equals(""))
+            finalString += "name:" + name + "$comment:" + comment;
+        else
+            finalString += "name:" + name + "$comment:No comment";
 
         return finalString;
+    }
+
+    public static String arrayToSerialized() {
+        return "";
     }
 
     /*
@@ -55,14 +82,4 @@ public class Symptoms
         this.comment = comment;
     }
 
-
-    /**
-     * Similar to the toString() function, but is used to return the JSON form of the symptom.
-     *
-     * @return {@link org.json.JSONObject} version of this symptom
-     */
-    public String toJSON()
-    {
-        return "{\"name\":\""+ name +"\",\"comment\":\"" + comment + "\"}";
-    }
 }

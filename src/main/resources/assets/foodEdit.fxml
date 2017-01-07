@@ -34,7 +34,7 @@
                   <Insets right="10.0" />
                </GridPane.margin>
             </Label>
-            <TextField fx:id="nameField" prefHeight="25.0" prefWidth="120.0" GridPane.columnIndex="1" GridPane.halignment="CENTER" />
+            <TextField fx:id="nameField" prefHeight="25.0" prefWidth="120.0" GridPane.columnIndex="1" GridPane.halignment="CENTER" promptText="&amp;,$ and : not allowed!"/>
             <ChoiceBox fx:id="stateChoice" prefWidth="120.0" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="1" />
             <MenuButton fx:id="selectedSymptoms" mnemonicParsing="false" prefWidth="120.0" text="Symptomes" GridPane.columnIndex="1" GridPane.halignment="CENTER" GridPane.rowIndex="2" />
             <Label text="Kategori:" GridPane.halignment="RIGHT" GridPane.rowIndex="3">
