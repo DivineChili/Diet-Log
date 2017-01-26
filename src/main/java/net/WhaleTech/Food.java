@@ -1,9 +1,5 @@
 package net.WhaleTech;
 
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.StringBinding;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 
 /**
  * One of the most used objects in this program.
@@ -41,7 +37,7 @@ public class Food
         this.title = title;
         this.isCategory = isCategory;
         this.tag = tag;
-        System.out.println("New Created Food: " + title + ", " + toJSON());
+        System.out.println("New Created Food: " + title + ", " + toString());
     }
 
     /**
@@ -114,36 +110,45 @@ public class Food
 
 
     /**
-     * turns all the symptoms in the food object into a single {@link org.json.JSONArray}
+     * Returns a serialized version of the
+     * symptoms to store as a string
      *
      * @return
-     *          the {@link org.json.JSONArray} which contains all the symptoms.
+     *      The serialized string
+     *
      */
-    public String symptomsToJSON()
+    public String serializeSymptoms()
     {
         String allSymptoms = "";
 
         if(getSymptoms() != null)
         {
-            for (int i = 0; i < symptoms.length; i++) {
-                if (i == 0)
-                    allSymptoms += symptoms[i].toJSON();
+            for (int i = 0; i<symptoms.length; i++)
+            {
+                if(i == 0)
+                    allSymptoms += symptoms[i].toString();
                 else
-                    allSymptoms += "," + symptoms[i].toJSON();
+                    allSymptoms += "&" + symptoms[i].toString();
             }
-        }
-
+        }else
+            allSymptoms = null;
         return allSymptoms;
     }
 
-    /**
-     * like the toString() method, but instead converts the food object into a {@link org.json.JSONObject}
-     *
-     * @return
-     *          the coresponding {@link org.json.JSONObject} whith all thje info from the fields.
-     */
-    public String toJSON()
-    {
-        return "{\"title\": \"" + title + "\", \"state\": "+ state + ", \"symptoms\":[" + symptomsToJSON() + "],\"comment\": \"" + comment +"\", \"isCategory\": " + isCategory + ", \"tag\": \"" + tag.toString()  + "\"}";
+    public static Symptoms[] deserializeSymptomArray(String serializedString) {
+        if(serializedString != null) {
+            String[] serializedSymptom = serializedString.split("&");
+            int size = serializedSymptom.length;
+            Symptoms[] allSymptoms = new Symptoms[size];
+
+
+            for (int i = 0; i < size; i++) {
+                allSymptoms[i] = new Symptoms(serializedSymptom[i]);
+                System.out.println(serializedSymptom[i]);
+            }
+            return allSymptoms;
+        }
+        else
+            return null;
     }
 }

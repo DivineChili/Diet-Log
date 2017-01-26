@@ -201,30 +201,6 @@ public class JsonHandler
     }
 
     /**
-     * Adds a food to desired category
-     * @param source
-     *              the {@link JSONObject} which is to be modified
-     * @param catIndex
-     *              the category index to append the food
-     * @param food
-     *              the food to append
-     * @return
-     *              the modified source
-     */
-    public static String appendFood(String source, int catIndex, Food food)
-    {
-        JSONObject root = new JSONObject(source);
-
-        JSONArray data = root.getJSONArray("data");
-        JSONArray categoriy = data.getJSONArray(catIndex);
-
-        JSONObject jFood = new JSONObject(food.toJSON());
-        categoriy.put(categoriy.length(), jFood);
-
-        return root.toString();
-    }
-
-    /**
      * Gets al the symptoms from the source (Not commonly used!)
      * @param source
      *              the {@link JSONObject} which is to be read
@@ -297,60 +273,5 @@ public class JsonHandler
         JSONObject jFood = category.getJSONObject(food);
 
         return new Food(jFood.getString("title"),jFood.getInt("state"),getFoodSymptoms(jFood),jFood.getString("comment"),jFood.getBoolean("isCategory"), new Tag(jFood.getString("tag")));
-    }
-
-
-    /**
-     * Sometimes used for debug purposes. Commonly disabled.
-     */
-    public static void createJsonTest()
-    {
-        JSONObject root = new JSONObject("{}");
-        JSONArray data = new JSONArray();
-        JSONArray categories = new JSONArray();
-        JSONObject food1 = new JSONObject();
-        JSONArray symptoms = new JSONArray();
-
-
-        JSONArray globalSymptoms = new JSONArray();
-
-        globalSymptoms.put(0, "Energi");
-        globalSymptoms.put(1, "Søvn");
-        globalSymptoms.put(2, "Vekt");
-        globalSymptoms.put(3, "Ødem");
-        globalSymptoms.put(4, "Hud - Utslett");
-        globalSymptoms.put(5, "Hud - Kløe");
-        globalSymptoms.put(6, "Mage - Smerter");
-        globalSymptoms.put(7, "Mage - Oppblåst");
-        globalSymptoms.put(8, "Avføring");
-        globalSymptoms.put(9, "Hodepine");
-
-        symptoms.put(0, new JSONObject("{\"name\": \"Energi\", \"comment\": \"Wow!\"}"));
-
-        root.put("data", data);
-        root.put("globalSymptoms", globalSymptoms);
-
-        data.put(0,categories);
-
-        categories.put(0,"Korn");
-        categories.put(1, food1);
-
-        food1.put("title","Hvete");
-        food1.put("state",2);
-        food1.put("symptoms",symptoms);
-
-        food1.put("comment","Ikke spis dette!");
-        food1.put("isCategory", false);
-
-        try
-        {
-            FileWriter writer = new FileWriter("./.data/test.json");
-            writer.write(root.toString());
-            writer.flush();
-            writer.close();
-        }catch (IOException e)
-        {
-            e.printStackTrace();
-        }
     }
 }

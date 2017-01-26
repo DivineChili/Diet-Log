@@ -7,10 +7,12 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import net.WhaleTech.Handlers.DatabaseController;
 import net.WhaleTech.Handlers.FileHandler;
 import net.WhaleTech.Handlers.JsonHandler;
 import net.WhaleTech.Windows.Confirmation;
 
+import javax.xml.crypto.Data;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.ResourceBundle;
@@ -19,12 +21,12 @@ public class Main extends Application {
 
 
     // The datafile where all the specific data is stored
-    private static final File userDataFile = new File("./.data/data.json");
+    private static final File user_settings = new File("./.data/settings.json");
 
     // The variables that will contain the JsonSource from the file,
     // and the JsonSource that will be used to contain temp changes from the user
     public static String JsonSource;
-    public static String UnsavedJsonSource;
+    public static DatabaseController db_controller;
 
     // ResourceBundle which hold Internationalization and localization file
     public static ResourceBundle bundle;
@@ -38,18 +40,25 @@ public class Main extends Application {
      * @throws Exception
      */
     @Override
-    public void start(Stage primaryStage) throws Exception{
+    public void start(Stage primaryStage) throws Exception {
+
+        // Connect to Database
+        db_controller = new DatabaseController();
 
         // First time setup
         // Runs if the data file does not exist
-        if(!userDataFile.exists()) {
+
+        if(!user_settings.exists()) {
+
             System.out.println("Running First-time setup!");
+            db_controller.rebuildDatabase();
+
             try {
                 // Creates the .data directory if it does not exist.
                 if(!new File("./.data/").exists()) new File("./.data/").mkdirs();
 
                 // Initializes a filewriter on the datafile
-                FileWriter writer = new FileWriter(userDataFile.getPath());
+                FileWriter writer = new FileWriter(user_settings.getPath());
 
                 // Simply writes the basic JSON file and closes the writer
                 writer.write(FileHandler.readFile("assets/baseJson.json"));
@@ -67,13 +76,16 @@ public class Main extends Application {
         else
         {
             System.out.println("Data file detected!");
-            System.out.println("Skipping first-time run!");
+            System.out.println("Skipping first-time setup!");
         }
 
         // Loads the data file and puts it in JsonSource. It then takes a copy of JsonSource to UnsavedJsonSource
         // I do this to compare for changes later on.
-        JsonSource = JsonHandler.getJSON(userDataFile);
-        UnsavedJsonSource = FileHandler.readFile("assets/baseJson.json");
+        JsonSource = JsonHandler.getJSON(user_settings);
+        //UnsavedJsonSource = FileHandler.readFile("assets/baseJson.json");
+
+        // TODO Remove db_rebuild when done debugging!
+        //db_controller.rebuildDatabase();
 
         // Loads up the Localization file from the resources.
         bundle = ResourceBundle.getBundle("assets/lang/GUI",JsonHandler.getLocale(JsonSource));
@@ -116,29 +128,9 @@ public class Main extends Application {
         // Sends a confirmation box to check if the user really want to exit.
         if(Confirmation.confirm(Confirmation.ConfirmExitProperty[0], Confirmation.ConfirmExitProperty[1]))
         {
-            // Then scans for any unsaved changes.
-            if(!UnsavedJsonSource.equals(JsonSource))
-            {
-                //If there are differences, send confirmation to check if user want to save.
-                if(Confirmation.confirm(Confirmation.ConfirmExitProperty[0],Confirmation.ConfirmExitProperty[2]))
-                {
-                    // Saves the code and exits the program
-                    save(UnsavedJsonSource);
-                    System.exit(0);
-                    Platform.exit();
-                }
-                else
-                {
-                    // Just exits without saving
-                    System.exit(0);
-                    Platform.exit();
-                }
-            }
-            else {
-                // Exits without asking for saving
-                System.exit(0);
-                Platform.exit();
-            }
+            // Exits
+            System.exit(0);
+            Platform.exit();
         }
     }
 
@@ -150,26 +142,6 @@ public class Main extends Application {
      */
     public static void save(String unsaved)
     {
-        System.out.println("Saving UnsavedJsonSource!");
-        System.out.println(JsonSource);
-        System.out.println(UnsavedJsonSource);
-        try {
-            // Deletes old datafile and creates a fresh, empty file
-            new File(userDataFile.getPath()).delete();
-            FileWriter writer = new FileWriter(userDataFile.getPath());
-
-            // Writes the unsaved text and closes the writer
-            writer.write(unsaved);
-            writer.flush();
-            writer.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }finally
-        {
-            System.out.println("Done!");
-            // When done, the JsonSource is now equal to the Unsaved text, but the change is only in the file. Not memory
-            // So we have to declare the JsonSource again.
-            JsonSource = unsaved;
-        }
+        System.out.println("Saving!");
     }
 }
