@@ -1,5 +1,7 @@
 package net.WhaleTech.Controllers;
 
+import com.sun.istack.internal.NotNull;
+import com.sun.istack.internal.Nullable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -16,6 +18,8 @@ import net.WhaleTech.Handlers.JsonHandler;
 import net.WhaleTech.Symptoms;
 import net.WhaleTech.Tag;
 
+import java.io.Externalizable;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -227,9 +231,9 @@ public class FoodController implements Initializable
         Parent root = null;
         try
         {
-            if(FXMLtoLoad == "food")
+            if(FXMLtoLoad.equals("food"))
                 root = FXMLLoader.load(getSystemClassLoader().getResource("assets/foodEdit.fxml"));
-        }catch (IOException e)
+        }catch (IOException|NullPointerException|IllegalArgumentException e)
         {
             e.printStackTrace();
         }
