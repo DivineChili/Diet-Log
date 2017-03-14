@@ -27,11 +27,14 @@ public class DatabaseController
         // Re-create deleted tables
         this.stat.executeUpdate("CREATE TABLE categories(ID INTEGER PRIMARY KEY AUTOINCREMENT, label string NOT NULL, indexvalue INTEGER NOT NULL,tag string NOT NULL);");
         this.stat.executeUpdate("CREATE TABLE symptoms(ID INTEGER PRIMARY KEY AUTOINCREMENT, name string NOT NULL);");
-        this.stat.executeUpdate("CREATE TABLE food(ID INTEGER PRIMARY KEY AUTOINCREMENT,name string NOT NULL, state INTEGER NOT NULL, symptoms string, comment string, categoryindex INTEGER, tag string, FOREIGN KEY(categoryindex) REFERENCES categories(ID));");
+        this.stat.executeUpdate("CREATE TABLE food(ID INTEGER PRIMARY KEY AUTOINCREMENT,name string NOT NULL, state INTEGER NOT NULL, symptoms string, comment string, categoryindex INTEGER, tag string, FOREIGN KEY(categoryindex) REFERENCES categories(indexvalue));");
         this.stat.executeBatch();
     }
 
-    public static int getNumberOfFetchedRowes(ResultSet rs) throws Exception{ // TODO !!IMPORTANCE HIGH!! Remove this function!
+    /*
+        This function removes all the items from the ResultSet provided, and needs to be removed!
+     */
+    public static int getNumberOfFetchedRows(ResultSet rs) throws Exception{ // TODO !!IMPORTANCE HIGH!! Remove this function!
         int count = 0;
         while(rs.next()){ ++count; }
         return count;
@@ -39,7 +42,7 @@ public class DatabaseController
 
     public String[] getGlobalSymptoms() throws Exception{
         ResultSet result = this.stat.executeQuery("SELECT name AS Symptom FROM symptoms");
-        String[] symptoms = new String[getNumberOfFetchedRowes(result)]; // TODO Remove getNumberOfFetchedRowes!
+        String[] symptoms = new String[getNumberOfFetchedRows(result)]; // TODO Remove getNumberOfFetchedRows!
         int count = 0;
         while(result.next()){
             symptoms[count] = result.getString("Symptom");
@@ -72,7 +75,7 @@ public class DatabaseController
 
     public int[] getCategoryIDList() throws Exception {
         ResultSet rs = this.stat.executeQuery("SELECT indexvalue FROM categories ORDER BY indexvalue ASC;");
-        //System.out.println("Fetched: " + getNumberOfFetchedRowes(rs));
+        //System.out.println("Fetched: " + getNumberOfFetchedRows(rs));
 
         ArrayList<Integer> list = new ArrayList<>();
 
@@ -101,8 +104,8 @@ public class DatabaseController
         return size;
     }
 
-    public void removeFood(String source, int food) throws Exception {
-        this.stat.executeUpdate("DELETE FROM food WHERE ID="+food+";");
+    public void removeFood(String foodTag) throws Exception {
+        this.stat.executeUpdate("DELETE FROM food WHERE tag=\""+foodTag+"\";");
     }
 
     public void appendFood(int catIndex, Food food) throws Exception {

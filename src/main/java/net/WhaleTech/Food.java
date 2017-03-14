@@ -1,11 +1,13 @@
 package net.WhaleTech;
 
 
+import javafx.collections.ObservableList;
+
 /**
  * One of the most used objects in this program.
  * This object contains the core data of each food, which will be represented in the GUI.
  */
-public class Food
+public class Food implements HierarchyData<Food>
 {
     private int state;
     private Symptoms[] symptoms;
@@ -150,5 +152,10 @@ public class Food
         }
         else
             return null;
+    }
+
+    @Override
+    public ObservableList<Food> getChildren() {
+        return null;
     }
 }

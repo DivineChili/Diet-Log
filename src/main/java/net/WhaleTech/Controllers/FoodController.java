@@ -25,6 +25,7 @@ import java.util.ResourceBundle;
 import static java.lang.ClassLoader.getSystemClassLoader;
 import static net.WhaleTech.Controllers.MainController.searchText;
 import static net.WhaleTech.Controllers.MainController.tagRegistry;
+import static net.WhaleTech.Main.bundle;
 import static net.WhaleTech.Main.db_controller;
 
 /**
@@ -113,7 +114,12 @@ public class FoodController implements Initializable
         }
 
         // Add the state options to the state choicebox
-        stateChoice.getItems().addAll("Bra", "Ok", "Ikke Spis!", "Utestet"); // Add States'
+        stateChoice.getItems().addAll(bundle.getString("gui.Food.state.good"),
+                bundle.getString("gui.Food.state.ok"),
+                bundle.getString("gui.Food.state.bad"),
+                bundle.getString("gui.Food.state.untested")
+        ); // Add States
+
         stateChoice.getSelectionModel().selectLast();
 
         // Add a special listener on the nameField's property so that we can get manipulate the user input.
@@ -173,7 +179,9 @@ public class FoodController implements Initializable
 
         // Adds the food with all selected values from the GUI
         addBtn.setOnAction(e ->
-        { ObservableList<Symptoms> selSyms = FXCollections.observableArrayList();
+        {
+            System.out.println("Adding food!");
+            ObservableList<Symptoms> selSyms = FXCollections.observableArrayList();
             // Add all the symptoms selected in the select symptoms menu into a single Observable array list.
             // This will also sort them so no spaces is inputed in the table.
             for (int i = 0; i < selectedSymptoms.getItems().size() - 1; i++) {
@@ -199,8 +207,7 @@ public class FoodController implements Initializable
             if(selSyms.size() == 0) {allSyms = null;}
 
             if(     // Basic form Validation
-                    !nameField.getText().isEmpty() &&
-                            !categories.getSelectionModel().isSelected(-1)
+                    !nameField.getText().isEmpty()
                     ){
 
                 // If food is not a food category
@@ -220,9 +227,11 @@ public class FoodController implements Initializable
                 else
                     // If food is a category
                     try{
-                    MainController.makeCategory(MainController.root, nameField.getText());
-                    db_controller.createCategory(nameField.getText(), MainController.categoryTitles.size()-1, tagRegistry.get(tagRegistry.size()-1).toString());
+                        MainController.makeCategory(MainController.root, nameField.getText());
+                        db_controller.createCategory(nameField.getText(), MainController.categoryTitles.size()-1, tagRegistry.get(tagRegistry.size()-1).toString());
                 } catch (Exception e1) {e1.printStackTrace();}
+
+                System.out.println("I got executed!");
 
                 // Close the stage
                 Node source = (Node) e.getSource();
@@ -237,7 +246,7 @@ public class FoodController implements Initializable
 
     public static void display(String FXMLtoLoad) // Display Function
     /**
-     * The reason I use the {@link String} FXMLtoLoad is to be able to change the GUIs
+     * I use the {@link String}, FXMLtoLoad, to be able to change the GUIs
      * FXML and still use the same controller.
      */
     {

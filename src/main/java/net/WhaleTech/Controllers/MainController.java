@@ -11,17 +11,15 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.text.Font;
 import net.WhaleTech.*;
-import net.WhaleTech.Handlers.JsonHandler;
 import net.WhaleTech.Windows.Alert;
+import net.WhaleTech.Windows.Confirmation;
+import sun.reflect.generics.tree.Tree;
 
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.ResourceBundle;
-import java.util.concurrent.ExecutionException;
 
-import static net.WhaleTech.Main.JsonSource;
+import static net.WhaleTech.Main.bundle;
 import static net.WhaleTech.Main.db_controller;
 
 public class MainController implements Initializable
@@ -175,26 +173,43 @@ public class MainController implements Initializable
             Some simple action listeners for the different controllers in the GUI
          */
 
-        btnAdd.setOnAction(e -> {searchText = searchField.getText(); staticTreeView = treeView; FoodController.display("food");});
+        btnAdd.setOnAction(e -> {searchText = searchField.getText(); FoodController.display("food");});
 
         symChange.setOnAction(e-> Alert.display(Alert.CommingSoonResourceProperty[0],Alert.CommingSoonResourceProperty[1]));
         symDel.setOnAction(e -> Alert.display(Alert.CommingSoonResourceProperty[0],Alert.CommingSoonResourceProperty[1]));
 
         modify.setOnAction(e-> Alert.display(Alert.CommingSoonResourceProperty[0],Alert.CommingSoonResourceProperty[1]));
-        modDelete.setOnAction(e-> { /*
-            TreeItem<Food> child = treeView.getSelectionModel().getSelectedItem();
+        modDelete.setOnAction(e-> {
+            System.out.println(treeView.isEditable());
+            TreeItem<Food> child = (treeView.getSelectionModel().getSelectedItem() != null) ? treeView.getSelectionModel().getSelectedItem() : treeView.getRoot();
             if(!child.getValue().isCategory())
             {
-                UnsavedJsonSource = JsonHandler.removeFood(UnsavedJsonSource, categoryTitles.indexOf((child.getParent().getValue()).getTitle()),foodIndex.indexOf(child.getValue().getTitle()));
-                child.getParent().getChildren().remove(foodIndex.indexOf(child.getValue().getTitle()));
-                foodIndex.remove(foodIndex.indexOf(child.getValue().getTitle()));
+                if(Confirmation.confirm(bundle.getString("gui.Dia.confirm.func.delete.title"),bundle.getString("gui.Dia.confirm.func.delete.text")));
+                {
+                    System.out.println("Trying to delete: " + child.getValue().toString());
+                    try {
+                        TreeItem c = (TreeItem)child;
+                        treeView.setRoot(null); root = null;
+                        root = getTreeModel();
+                        treeView.setRoot(root);
+
+                        db_controller.removeFood(child.getValue().toString());
+
+                        treeView.getSelectionModel().selectFirst();
+
+                    }catch (Exception e1) {System.out.println("ERROR deleting food!"); e1.printStackTrace();}
+                }
+            }
+            else if(child.getValue().isCategory() && child != treeView.getRoot())
+            {
+                Alert.display(bundle.getString("gui.Dia.alert.func.delete.title"),bundle.getString("gui.Dia.alert.func.delete.text"));
             }
             else
             {
-                UnsavedJsonSource = JsonHandler.removeCategory(UnsavedJsonSource, categoryTitles.indexOf(child.getValue().getTitle()));
-                child.getParent().getChildren().remove(categoryTitles.indexOf(child.getValue().getTitle()));
-                categoryTitles.remove(categoryTitles.indexOf(child.getValue().getTitle()));
-            }*/ Alert.display(Alert.CommingSoonResourceProperty[0],Alert.CommingSoonResourceProperty[1]);});
+                System.out.println("Cannot delete root!");
+                Alert.display(bundle.getString("gui.Dia.alert.func.delete.title"),bundle.getString("gui.Dia.alert.func.delete.text"));
+            }
+        });
 
         treeView.setRoot(root);
         treeView.setShowRoot(false);
@@ -316,7 +331,6 @@ public class MainController implements Initializable
                 makeLeaf(i, food);
             }
         }
-
     }
 
     /*
@@ -370,7 +384,10 @@ public class MainController implements Initializable
             }
 
             if(empty)
+            {
                 setText(null);
+                setGraphic(null);
+            }
 
             // If cell is not empty and is not null, then render it with the title of the item.
             if(!empty && item != null)

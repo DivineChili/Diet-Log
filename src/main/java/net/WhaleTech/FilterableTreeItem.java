@@ -129,4 +129,5 @@ public class FilterableTreeItem<T> extends
     {
         this.predicate.set(predicate);
     }
+
 }

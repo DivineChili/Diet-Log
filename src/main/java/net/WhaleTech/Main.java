@@ -21,12 +21,15 @@ public class Main extends Application {
 
 
     // The datafile where all the specific data is stored
-    private static final File user_settings = new File("./.data/settings.json");
+    private static final File user_settings = new File("settings.json");
 
     // The variables that will contain the JsonSource from the file,
     // and the JsonSource that will be used to contain temp changes from the user
     public static String JsonSource;
     public static DatabaseController db_controller;
+
+    // The main window
+    public static Stage primWindow;
 
     // ResourceBundle which hold Internationalization and localization file
     public static ResourceBundle bundle;
@@ -93,6 +96,8 @@ public class Main extends Application {
         // Creates a scene "root" which contains the gui.fxml
         Parent root = FXMLLoader.load(ClassLoader.getSystemClassLoader().getResource("assets/gui.fxml"));
 
+        primWindow = primaryStage;
+
         // Sets the title
         primaryStage.setTitle(bundle.getString("title"));
 
@@ -120,6 +125,10 @@ public class Main extends Application {
         launch(args);
     }
 
+    public static void setLoading(boolean loading) {
+
+    }
+
     /*
      * Method to use when the user sends a shutdown signal to the thread
      */
@@ -132,16 +141,5 @@ public class Main extends Application {
             System.exit(0);
             Platform.exit();
         }
-    }
-
-    /**
-     * Function used to save the {@link String}{@param unsaved} to the user JSON file
-     *
-     * @param unsaved
-     *          the unsaved Json to be saved to user file.
-     */
-    public static void save(String unsaved)
-    {
-        System.out.println("Saving!");
     }
 }
