@@ -27,7 +27,7 @@ public class  Symptoms
      * @param serializedString
      *          the serialized string
      *
-     * @apiNote Syntax: name:some_name,comment:some_comment
+     * @apiNote Syntax: name:some_name$comment:some_comment&name:some_other_name$comment:some_comment
      */
     public Symptoms(String serializedString) {
 

@@ -1,11 +1,14 @@
 package net.WhaleTech.Handlers;
 
+import net.WhaleTech.Controllers.MainController;
 import net.WhaleTech.Food;
 import net.WhaleTech.Symptoms;
 import net.WhaleTech.Tag;
 
 import java.sql.*;
 import java.util.ArrayList;
+
+import static net.WhaleTech.Controllers.MainController.categoryTitles;
 
 public class DatabaseController
 {
@@ -14,7 +17,7 @@ public class DatabaseController
 
     public DatabaseController() throws Exception{
         Class.forName("org.sqlite.JDBC");
-        this.conn = DriverManager.getConnection("jdbc:sqlite:data.db");
+        this.conn = DriverManager.getConnection("jdbc:sqlite:food.db");
         this.stat = conn.createStatement();
     }
 
@@ -93,12 +96,21 @@ public class DatabaseController
         this.stat.executeUpdate("INSERT INTO categories (label, indexvalue, tag) VALUES (\""+name+"\",\""+index+"\",\""+tag+"\");");
     }
 
-    public void removeCategory(int catIndex) throws Exception {
-        this.stat.executeUpdate("DELETE FROM categories WHERE ID="+catIndex+";");
+    public void removeCategory(int catIndex, boolean bDeleteFoods) throws Exception {
+        if(!bDeleteFoods){
+            this.stat.executeUpdate("DELETE FROM categories WHERE ID="+catIndex+";");
+            if(MainController.categoryTitles.size() < 1) MainController.makeCategory(MainController.root,"Uncategorized");
+            this.stat.executeUpdate("");
+        }
+        else {
+            this.stat.executeUpdate("DELETE FROM food WHERE categoryindex="+catIndex+";");
+            this.stat.executeUpdate("DELETE FROM categories WHERE ID="+catIndex+";");
+        }
+
     }
 
     public int getCategorySize(int catIndex) throws Exception {
-        ResultSet rs = this.stat.executeQuery("SELECT COUNT(category-index) AS AmountOfFood FROM food WHERE category-index="+catIndex+";");
+        ResultSet rs = this.stat.executeQuery("SELECT COUNT(categoryindex) AS AmountOfFood FROM food WHERE categoryindex="+catIndex+";");
         int size = rs.getInt("AmountOfFood");
         rs.close();
         return size;
@@ -121,6 +133,17 @@ public class DatabaseController
         conn.setAutoCommit(false);
         prep.executeBatch();
         conn.setAutoCommit(true);
+    }
+
+    public void updateFood(int catIndex, Food food) throws Exception {
+        this.stat.executeUpdate("UPDATE food SET " +
+                "name = " + food.getTitle() + ", " +
+                "state = " + food.getState() + ", " +
+                "symptoms = " + food.serializeSymptoms() + ", " +
+                "comment = " + food.getComment() + ", " +
+                "categoryindex = " + catIndex + ", " +
+                "tag = " + food.toString() + ", "
+        );
     }
 
     public Symptoms[] getFoodSymptoms(int catIndex, int foodIndex) throws Exception {

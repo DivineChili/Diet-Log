@@ -51,7 +51,7 @@ public class Main extends Application {
         // First time setup
         // Runs if the data file does not exist
 
-        if(!user_settings.exists()) {
+        if(!user_settings.exists() || !(new File("food.db").exists())) {
 
             System.out.println("Running First-time setup!");
             db_controller.rebuildDatabase();
@@ -87,8 +87,6 @@ public class Main extends Application {
         JsonSource = JsonHandler.getJSON(user_settings);
         //UnsavedJsonSource = FileHandler.readFile("assets/baseJson.json");
 
-        // TODO Remove db_rebuild when done debugging!
-        //db_controller.rebuildDatabase();
 
         // Loads up the Localization file from the resources.
         bundle = ResourceBundle.getBundle("assets/lang/GUI",JsonHandler.getLocale(JsonSource));

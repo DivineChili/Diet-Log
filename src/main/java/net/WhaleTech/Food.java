@@ -3,11 +3,13 @@ package net.WhaleTech;
 
 import javafx.collections.ObservableList;
 
+import java.util.ArrayList;
+
 /**
  * One of the most used objects in this program.
  * This object contains the core data of each food, which will be represented in the GUI.
  */
-public class Food implements HierarchyData<Food>
+public class Food
 {
     private int state;
     private Symptoms[] symptoms;
@@ -137,6 +139,16 @@ public class Food implements HierarchyData<Food>
         return allSymptoms;
     }
 
+    public String[] getSymptomTitles() {
+        String[] syms = new String[this.symptoms.length];
+
+        for(int i = 0; i < this.symptoms.length; i++) {
+            syms[i] = this.symptoms[i].getName();
+        }
+
+        return syms;
+    }
+
     public static Symptoms[] deserializeSymptomArray(String serializedString) {
         if(serializedString != null) {
             String[] serializedSymptom = serializedString.split("&");
@@ -152,10 +164,5 @@ public class Food implements HierarchyData<Food>
         }
         else
             return null;
-    }
-
-    @Override
-    public ObservableList<Food> getChildren() {
-        return null;
     }
 }

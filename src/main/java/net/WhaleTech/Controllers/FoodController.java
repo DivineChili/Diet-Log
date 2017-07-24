@@ -12,19 +12,16 @@ import javafx.scene.control.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import net.WhaleTech.Food;
-import net.WhaleTech.Handlers.JsonHandler;
-import net.WhaleTech.Main;
 import net.WhaleTech.Symptoms;
 import net.WhaleTech.Tag;
+import net.WhaleTech.Windows.*;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.ResourceBundle;
 
 import static java.lang.ClassLoader.getSystemClassLoader;
-import static net.WhaleTech.Controllers.MainController.searchText;
-import static net.WhaleTech.Controllers.MainController.tagRegistry;
+import static net.WhaleTech.Controllers.MainController.*;
 import static net.WhaleTech.Main.bundle;
 import static net.WhaleTech.Main.db_controller;
 
@@ -56,26 +53,14 @@ public class FoodController implements Initializable
     @FXML
     private ChoiceBox<String> categories;
 
+
+    public static boolean bIsChanging;
     private String CharBlacklist = "/\\_^";
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // Get all symptoms from the Unsaved json-source
+        //TODO Get all global symptoms from db_controller
         String[] globalSymptoms = {"1","2","3"};
-
-        // Add the search content to the name bar if the search field in the main controller is not empty
-        if(!MainController.searchText.isEmpty())
-            nameField.setText(MainController.searchText);
-
-        // Auto select the last element of the states. (Untested!)
-        stateChoice.getSelectionModel().selectLast();
-
-        try {
-            // Auto select the category which is selected in the main controller
-            categories.getSelectionModel().select(MainController.staticTreeView.getSelectionModel().getSelectedItem().getValue().getTitle());
-
-        }catch (NullPointerException e)
-        {} // No categories selected
 
         // If there dosn't exist any categories
         if(MainController.categoryTitles.isEmpty()) {
@@ -93,6 +78,11 @@ public class FoodController implements Initializable
 
             CheckBox cb = new CheckBox(symptom);
 
+            if(bIsChanging && sSelectedFoodItem.getValue().serializeSymptoms().contains(symptom)) {
+                cb.setSelected(true);
+                System.out.println("Selecting " + symptom);
+            }
+
             // workaround: the color of the labels is wrong (white text on white background), we have to set it explicitly
             cb.setStyle("-fx-text-fill: -fx-text-base-color");
 
@@ -104,7 +94,7 @@ public class FoodController implements Initializable
 
         }
         // Add the last item for the selection box. This is a non-custom item.
-        MenuItem addSymptom = new MenuItem("Legg Til Symptom");
+        MenuItem addSymptom = new MenuItem("Legg Til Symptom"); // TODO Localize
         addSymptom.setDisable(true); // Disable this item, as it is not yet implemented!
         selectedSymptoms.getItems().add(addSymptom);
 
@@ -121,6 +111,38 @@ public class FoodController implements Initializable
         ); // Add States
 
         stateChoice.getSelectionModel().selectLast();
+        categories.getSelectionModel().selectFirst();
+
+        // If Changing a food and not adding
+        if(!bIsChanging) {
+            // Add the search content to the name bar if the search field in the main controller is not empty
+            if (!MainController.searchText.isEmpty())
+                nameField.setText(MainController.searchText);
+
+            try {
+                // Auto select the category which is selected in the main controller
+                if(!MainController.sSelectedFoodItem.getValue().isCategory()) // Select the parent of the selected Leaf
+                    categories.getSelectionModel().select(MainController.sSelectedFoodItem.getParent().getValue().getTitle());
+                else
+                    categories.getSelectionModel().select(MainController.sSelectedFoodItem.getValue().getTitle());
+
+            } catch (NullPointerException e) {
+                System.out.println("Selected item is not a category, or there is no selected item!");
+            } // No categories selected
+
+        }else
+        { // Set all the options to in the GUI
+            nameField.setText(MainController.sSelectedFoodItem.getValue().getTitle());
+            stateChoice.getSelectionModel().select( sSelectedFoodItem.getParent().getValue().getTitle());
+
+            categories.getSelectionModel().select(sSelectedFoodItem.getParent().getValue().getTitle());
+
+            //Debug
+            System.out.println("NameField = " + MainController.sSelectedFoodItem.getValue().getTitle());
+            System.out.println("State = " + sSelectedFoodItem.getValue().getState());
+            System.out.println("Symptoms = " + sSelectedFoodItem.getValue().serializeSymptoms());
+            System.out.println("Category = " + sSelectedFoodItem.getParent().getValue().getTitle());
+        }
 
         // Add a special listener on the nameField's property so that we can get manipulate the user input.
         nameField.textProperty().addListener((e, oldValue, newValue) ->
@@ -185,18 +207,18 @@ public class FoodController implements Initializable
             // Add all the symptoms selected in the select symptoms menu into a single Observable array list.
             // This will also sort them so no spaces is inputed in the table.
             for (int i = 0; i < selectedSymptoms.getItems().size() - 1; i++) {
-                    CustomMenuItem curItem;
-                    if (selectedSymptoms.getItems().get(i) instanceof CustomMenuItem) {
-                        curItem = (CustomMenuItem) selectedSymptoms.getItems().get(i);
-                        if (curItem.getContent() instanceof CheckBox) {
-                            if (((CheckBox) curItem.getContent()).isSelected()) {
-                                Symptoms tempSym = new Symptoms(((CheckBox) curItem.getContent()).getText(), "");
-                                System.out.println("Symptom: " + i + ": " + tempSym.toString());
-                                selSyms.add(tempSym);
-                            }
-                        }
-                    }
+                CustomMenuItem curItem;
+                if (selectedSymptoms.getItems().get(i) instanceof CustomMenuItem) {
+                   curItem = (CustomMenuItem) selectedSymptoms.getItems().get(i);
+                   if (curItem.getContent() instanceof CheckBox) {
+                       if (((CheckBox) curItem.getContent()).isSelected()) {
+                           Symptoms tempSym = new Symptoms(((CheckBox) curItem.getContent()).getText(), "");
+                           System.out.println("Symptom: " + i + ": " + tempSym.toString());
+                           selSyms.add(tempSym);
+                       }
+                   }
                 }
+            }
 
             // Create a pure Symptoms array which contains the symptoms from the observable array
             Symptoms[] allSyms = new Symptoms[selSyms.size()];
@@ -208,6 +230,8 @@ public class FoodController implements Initializable
 
             if(     // Basic form Validation
                     !nameField.getText().isEmpty()
+                            && !foodIndex.contains(nameField.getText())
+                            && !bIsChanging
                     ){
 
                 // If food is not a food category
@@ -219,7 +243,10 @@ public class FoodController implements Initializable
                                 allSyms,
                                 "",
                                 false,
-                                new Tag(categories.getValue(), nameField.getText())
+
+                                // If you make 2 foods with equal name, one of them will contain a number on the end to signify that it's not the same.
+                                // However, if you then make more of the same name, the 'duplicates' will all be deleted if one is deleted.
+                                new Tag(categories.getValue(), (foodIndex.contains(nameField.getText())) ? nameField.getText() + "1" : nameField.getText())
                         );
                         MainController.makeLeaf(MainController.categoryTitles.indexOf(categories.getValue()), made_food);
                         db_controller.appendFood(MainController.categoryTitles.indexOf(categories.getValue()), made_food);
@@ -231,8 +258,6 @@ public class FoodController implements Initializable
                         db_controller.createCategory(nameField.getText(), MainController.categoryTitles.size()-1, tagRegistry.get(tagRegistry.size()-1).toString());
                 } catch (Exception e1) {e1.printStackTrace();}
 
-                System.out.println("I got executed!");
-
                 // Close the stage
                 Node source = (Node) e.getSource();
                 Stage stage = (Stage) source.getScene().getWindow();
@@ -240,11 +265,14 @@ public class FoodController implements Initializable
             }
             // Form not accepted handlers. Achieved by elseif statements
             // TODO Internationalize
-            else if (nameField.getText().isEmpty()) {nameField.setText("Dette feltet mangler tekst!");}
+
+            else if (nameField.getText().isEmpty()) {
+                CustomAlert.display("ERROR!", "Mangler tekst i navnfeltet!");
+            }
         });
     }
 
-    public static void display(String FXMLtoLoad) // Display Function
+    public static void display(String FXMLtoLoad, boolean bChangingFood) // Display Function
     /**
      * I use the {@link String}, FXMLtoLoad, to be able to change the GUIs
      * FXML and still use the same controller.
@@ -255,6 +283,8 @@ public class FoodController implements Initializable
         // Set modality so that only this window can be accessed while this window is open. Not any other windows opened by the app.
         window.initModality(Modality.APPLICATION_MODAL);
         window.setResizable(false);
+
+        bIsChanging = bChangingFood;
 
         Parent root = null;
         try

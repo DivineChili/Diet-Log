@@ -11,9 +11,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.text.Font;
 import net.WhaleTech.*;
-import net.WhaleTech.Windows.Alert;
+import net.WhaleTech.Windows.CustomAlert;
 import net.WhaleTech.Windows.Confirmation;
-import sun.reflect.generics.tree.Tree;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -70,6 +69,9 @@ public class MainController implements Initializable
     @FXML
     private Menu OptionMenu;
 
+    @FXML
+    private MenuItem debugButton;
+
 
     private static ArrayList<FilterableTreeItem<Food>> categories = new ArrayList<>();
     public static ArrayList<String> categoryTitles = new ArrayList<>();
@@ -78,9 +80,13 @@ public class MainController implements Initializable
     public static ArrayList<Tag> tagRegistry = new ArrayList<>();
 
     public static String searchText;
+    public static TreeItem<Food> sSelectedFoodItem = null;
+
     public static TreeView<Food> staticTreeView;
 
     public static FilterableTreeItem<Food> root = new FilterableTreeItem<>(new Food("", true, new Tag("root")));
+
+
 
     private static Food selectedFood;
 
@@ -103,6 +109,10 @@ public class MainController implements Initializable
         // Set CellFactory class for treeview to be the FoodFormatCell() class.
         treeView.setCellFactory(param -> new FoodFormatCell());
 
+        searchField.textProperty().addListener(e -> {
+            treeView.getSelectionModel().select(null);
+        });
+
         // Sets the cellfactory for the tableview columns
         colSym.setCellValueFactory(new PropertyValueFactory<>("name"));
         colCom.setCellValueFactory(new PropertyValueFactory<>("comment"));
@@ -113,7 +123,9 @@ public class MainController implements Initializable
             return TreeItemPredicate.create(actor -> actor.toString().toLowerCase().contains(searchField.getText().toLowerCase()));
         }, searchField.textProperty())); // Root Predicate Property
 
-        treeView.getSelectionModel().selectedItemProperty().addListener ((c, oldValue, newValue) -> {
+        treeView.getSelectionModel().selectedItemProperty().addListener ((c, oldValue, newValue) ->
+        {
+            sSelectedFoodItem = newValue;
             if(newValue != null && !newValue.isLeaf())
             {
                 selectedFood = null;
@@ -152,7 +164,8 @@ public class MainController implements Initializable
         }); // TreeView Action Listener
 
         // Table View Action Listener
-        table.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+        table.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) ->
+        {
             if (newSelection != null) {
                 symText.setText(newSelection.getName());
                 symCom.setText(newSelection.getComment());
@@ -173,13 +186,42 @@ public class MainController implements Initializable
             Some simple action listeners for the different controllers in the GUI
          */
 
-        btnAdd.setOnAction(e -> {searchText = searchField.getText(); FoodController.display("food");});
+        debugButton.setOnAction(e -> {
 
-        symChange.setOnAction(e-> Alert.display(Alert.CommingSoonResourceProperty[0],Alert.CommingSoonResourceProperty[1]));
-        symDel.setOnAction(e -> Alert.display(Alert.CommingSoonResourceProperty[0],Alert.CommingSoonResourceProperty[1]));
+            for(String food : foodIndex) {
+                System.out.println(food);
+            }
 
-        modify.setOnAction(e-> Alert.display(Alert.CommingSoonResourceProperty[0],Alert.CommingSoonResourceProperty[1]));
-        modDelete.setOnAction(e-> {
+        });
+
+        btnAdd.setOnAction(e -> {
+            searchText = searchField.getText();
+            FoodController.display("food", false);
+            treeView.setRoot(null); root = null;
+
+            tagRegistry.clear();
+            categories.clear();
+            categoryTitles.clear();
+            try {
+                root = getTreeModel();
+            }catch (Exception e1)
+            {
+                e1.printStackTrace();
+            }
+            treeView.setRoot(root);
+        });
+
+        symChange.setOnAction(e-> CustomAlert.display(CustomAlert.CommingSoonResourceProperty[0], CustomAlert.CommingSoonResourceProperty[1]));
+        symDel.setOnAction(e -> CustomAlert.display(CustomAlert.CommingSoonResourceProperty[0], CustomAlert.CommingSoonResourceProperty[1]));
+
+        modify.setOnAction(e -> {
+            if(treeView.getSelectionModel().getSelectedItem().isLeaf() && treeView.getSelectionModel().getSelectedItem().getValue() != null)
+            {
+                FoodController.display("food", true);
+            }
+        });
+
+        modDelete.setOnAction(e -> {
             System.out.println(treeView.isEditable());
             TreeItem<Food> child = (treeView.getSelectionModel().getSelectedItem() != null) ? treeView.getSelectionModel().getSelectedItem() : treeView.getRoot();
             if(!child.getValue().isCategory())
@@ -188,12 +230,17 @@ public class MainController implements Initializable
                 {
                     System.out.println("Trying to delete: " + child.getValue().toString());
                     try {
-                        TreeItem c = (TreeItem)child;
+
                         treeView.setRoot(null); root = null;
-                        root = getTreeModel();
-                        treeView.setRoot(root);
+
+                        tagRegistry.clear();
+                        categories.clear();
+                        categoryTitles.clear();
 
                         db_controller.removeFood(child.getValue().toString());
+
+                        root = getTreeModel();
+                        treeView.setRoot(root);
 
                         treeView.getSelectionModel().selectFirst();
 
@@ -202,12 +249,12 @@ public class MainController implements Initializable
             }
             else if(child.getValue().isCategory() && child != treeView.getRoot())
             {
-                Alert.display(bundle.getString("gui.Dia.alert.func.delete.title"),bundle.getString("gui.Dia.alert.func.delete.text"));
+                CustomAlert.display(bundle.getString("gui.Dia.alert.func.delete.title"),bundle.getString("gui.Dia.alert.func.delete.text"));
             }
             else
             {
                 System.out.println("Cannot delete root!");
-                Alert.display(bundle.getString("gui.Dia.alert.func.delete.title"),bundle.getString("gui.Dia.alert.func.delete.text"));
+                CustomAlert.display(bundle.getString("gui.Dia.alert.func.delete.title"),bundle.getString("gui.Dia.alert.func.delete.text"));
             }
         });
 
